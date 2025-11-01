@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="zh‑CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device‑width, initial‑scale=1.0, user‑scalable=no">
+  <title>Multi‑Touch 检测 Demo</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+    #canvas {
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const touches = new Map();
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      touches.forEach(t => {
+        const {x, y, radiusX, radiusY, id} = t;
+
+        // 绘制绿色边框
+        const halfW = radiusX || 30;
+        const halfH = radiusY || 30;
+        ctx.beginPath();
+        ctx.rect(x - halfW, y - halfH, halfW * 2, halfH * 2);
+        ctx.strokeStyle = 'lime';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 绘制触控点的中心
+        ctx.beginPath();
+        ctx.arc(x, y, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(0,255,0,0.7)';
+        ctx.fill();
+
+        // 显示触控点的 ID
+        ctx.fillStyle = 'lime';
+        ctx.font = '12px sans‑serif';
+        ctx.fillText('id:' + id, x + 12, y - 12);
+      });
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+
+    function updateTouches(event) {
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      for (const t of event.changedTouches) {
+        const x = t.clientX - rect.left;
+        const y = t.clientY - rect.top;
+        const id = t.identifier;
+
+        if (event.type === 'touchstart' || event.type === 'touchmove') {
+          touches.set(id, {
+            x, y,
+            radiusX: t.radiusX || 30,
+            radiusY: t.radiusY || 30,
+            id
+          });
+        } else if (event.type === 'touchend' || event.type === 'touchcancel') {
+          touches.delete(id);
+        }
+      }
+    }
+
+    canvas.addEventListener('touchstart', updateTouches, {passive: false});
+    canvas.addEventListener('touchmove', updateTouches, {passive: false});
+    canvas.addEventListener('touchend', updateTouches, {passive: false});
+    canvas.addEventListener('touchcancel', updateTouches, {passive: false});
+  </script>
+</body>
+</html>
