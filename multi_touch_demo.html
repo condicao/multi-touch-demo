@@ -27,7 +27,7 @@
     const ctx = canvas.getContext('2d');
 
     const pixelSize = 10; // 每个像素块的大小
-    const pressureFalloff = 0.5; // 模拟触控压力衰减程度
+    const maxPressure = 255; // 最大的像素颜色值
 
     function resize() {
       canvas.width = window.innerWidth;
@@ -51,29 +51,36 @@
       }
     }
 
+    // 处理每个触摸点
     function draw() {
       drawGrid();
 
       touches.forEach(t => {
         const {x, y, radiusX, radiusY} = t;
 
-        // 在触摸点周围变换像素块的颜色
+        // 在触摸点周围不规则地改变像素颜色
         const cols = Math.ceil(canvas.width / pixelSize);
         const rows = Math.ceil(canvas.height / pixelSize);
-        
+
         for (let cx = 0; cx < cols; cx++) {
           for (let cy = 0; cy < rows; cy++) {
             const px = cx * pixelSize;
             const py = cy * pixelSize;
 
-            const dist = Math.sqrt(Math.pow(px - x, 2) + Math.pow(py - y, 2));
+            // 计算像素块到触摸点的距离，并基于此设置颜色
+            const distX = Math.abs(px - x);
+            const distY = Math.abs(py - y);
+            const dist = Math.sqrt(distX * distX + distY * distY);
             const maxDist = Math.sqrt(Math.pow(canvas.width, 2) + Math.pow(canvas.height, 2));
             const pressure = Math.max(0, 1 - dist / maxDist); // 根据距离决定颜色深浅
 
-            // 在触控区域变为白色，周围逐渐变浅
-            const colorValue = pressure * 255;
-            ctx.fillStyle = `rgb(${colorValue}, ${colorValue}, ${colorValue})`;
-            
+            // 模拟不规则的触控效果
+            const colorValue = Math.min(maxPressure, pressure * maxPressure);
+            const randomizeEffect = Math.random() * 0.5; // 不规则效果（随机因素）
+            const finalColor = Math.max(0, colorValue - randomizeEffect);
+
+            // 在触控区域变为浅白色，周围逐渐变暗
+            ctx.fillStyle = `rgb(${finalColor}, ${finalColor}, ${finalColor})`;
             ctx.fillRect(px, py, pixelSize, pixelSize);
           }
         }
@@ -121,3 +128,4 @@
   </script>
 </body>
 </html>
+
